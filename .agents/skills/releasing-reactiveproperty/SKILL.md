@@ -17,6 +17,8 @@ Run the tag-driven release procedure for the ReactiveProperty NuGet package set.
 ## Critical Rules
 
 - **Ask for release mode first when it is not specified.** Use `ask_user` with choices for `pre-release` and `stable release` before doing any release work.
+- **Never infer the target version from a single tag, release, or the repository `<Version>` property.** If the maintainer has not explicitly supplied the target version, ask for it and stop.
+- **Always distinguish version sources before confirming a release.** Report the newest tag, the newest GitHub Release by publication date, and the newest stable GitHub Release separately; do not call any one of them simply "the latest version".
 - **The current release workflow is tag-driven.** Do not update `Source/Directory.Build.props` or create a version bump PR unless the maintainer explicitly asks for repository version record-keeping.
 - **The tag is the package version source of truth.** `.github/workflows/build-and-publish.yml` rewrites `Source/Directory.Build.props` from the pushed `v*` tag inside the runner before build/test/package.
 - **Never overwrite or recreate a release tag.** If `v{version}` already exists locally or remotely, stop and ask the maintainer.
@@ -55,9 +57,15 @@ The normal `ReactiveProperty.slnx` release publishes these package IDs:
 1. Determine whether this is a **pre-release** or **stable release**.
    - If unspecified, call `ask_user` before proceeding.
 2. Determine the target version.
-   - If unspecified, ask the user for it.
+   - Accept only a version explicitly supplied by the maintainer.
+   - If unspecified, call `ask_user` and stop; do not propose or infer a version from tags, releases, package metadata, or `Source/Directory.Build.props`.
 3. Validate the version against the selected mode.
 4. Normalize the tag to `v{version}`.
+5. Before presenting the confirmation, inspect all three version views:
+   - newest tag by semantic version;
+   - newest GitHub Release by publication date;
+   - newest stable GitHub Release by semantic version.
+   Report all three when they differ, especially when a pre-release is newer by date but lower by semantic version.
 
 ### 2. Preflight the target commit
 
@@ -183,6 +191,9 @@ Before tagging, show:
 Release mode: pre-release|stable
 Version: {version}
 Tag: v{version}
+Newest tag: {tag}
+Newest GitHub Release: {tag} ({publishedAt})
+Newest stable GitHub Release: {tag}
 Target commit: {short-sha} {subject}
 Packages: ReactiveProperty, ReactiveProperty.Core, ReactiveProperty.Blazor, ReactiveProperty.WPF, ReactiveProperty.R3, ReactiveProperty.R3.WPF
 Validation: passed|skipped by maintainer
